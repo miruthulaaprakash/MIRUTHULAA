@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Profile – Collab Nexus</title>
+<meta name="description" content="Create your student profile on Collab Nexus to connect with peers and mentors.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html" class="active">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>👤 Create Student Profile</h1>
+    <p class="section-description">Add your academic details and share with peers.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline" href="profile-view.html">View My Profile</a>
+  </div>
+</div>
+
+<section class="form-card">
+<h2>Profile Details</h2>
+<div class="form-grid">
+  <div class="field-group">
+    <label>Name</label>
+    <input type="text" id="name" placeholder="Enter Name">
+  </div>
+  <div class="field-group">
+    <label>Email</label>
+    <input type="text" id="email" placeholder="Enter Email">
+  </div>
+  <div class="field-group">
+    <label>Year / Semester</label>
+    <input type="text" id="year" placeholder="Year / Semester">
+  </div>
+  <div class="field-group">
+    <label>Register Number</label>
+    <input type="text" id="regno" placeholder="Register Number">
+  </div>
+  <div class="field-group">
+    <label>Department</label>
+    <input type="text" id="dept" placeholder="Department">
+  </div>
+  <div class="field-group">
+    <label>Objective / About Me</label>
+    <textarea id="objective" placeholder="Brief objective or description about yourself"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Technical Skills</label>
+    <input type="text" id="skills" placeholder="Comma separated">
+  </div>
+  <div class="field-group">
+    <label>Achievements</label>
+    <input type="text" id="achievements" placeholder="Comma separated">
+  </div>
+  <div class="field-group">
+    <label>Certificates</label>
+    <textarea id="certificates" placeholder="Certificates (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Projects</label>
+    <textarea id="projects" placeholder="Projects (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Assignments</label>
+    <textarea id="assignments" placeholder="Assignments or tasks completed (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="small-note">Upload certificate, project, or assignment files</label>
+    <input type="file" id="attachments" multiple>
+  </div>
+</div>
+<div style="margin-top:24px; text-align:right;">
+  <button onclick="saveProfile()">Save Profile</button>
+</div>
+</section>
+
+<div id="status" class="status-box"></div>
+<div id="qrBox" class="share-box"></div>
+
+<script>
+function getId(){
+  var params = new URLSearchParams(window.location.search)
+  var id = params.get("id")
+  if(!id){
+    id = Date.now().toString()
+  }
+  return id
+}
+
+function getUsers(){
+  return JSON.parse(localStorage.getItem("users")) || []
+}
+
+function saveUsers(users){
+  localStorage.setItem("users", JSON.stringify(users))
+}
+
+function findUser(){
+  var id = getId()
+  var users = getUsers()
+  return users.find(u => String(u.id) === String(id))
+}
+
+function readFiles(files, callback){
+  if(!files || files.length === 0){
+    callback([])
+    return
+  }
+
+  var attachments = []
+  var loaded = 0
+
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader()
+    reader.onload = function(){
+      attachments.push({name: file.name, data: reader.result})
+      loaded++
+      if(loaded === files.length){
+        callback(attachments)
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function showForm(user){
+  if(!user) return
+  document.getElementById("name").value = user.name || ""
+  document.getElementById("email").value = user.email || ""
+  document.getElementById("year").value = user.year || ""
+  document.getElementById("regno").value = user.regno || ""
+  document.getElementById("dept").value = user.dept || ""
+  document.getElementById("objective").value = user.objective || ""
+  document.getElementById("skills").value = user.skills || ""
+  document.getElementById("achievements").value = user.achievements || ""
+  document.getElementById("certificates").value = user.certificates || ""
+  document.getElementById("projects").value = user.projects || ""
+  document.getElementById("assignments").value = user.assignments || ""
+}
+
+function saveProfile(){
+  var existing = findUser()
+  var files = document.getElementById("attachments").files
+
+  function save(attachments){
+    var profile = {
+      id: getId(),
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      year: document.getElementById("year").value,
+      regno: document.getElementById("regno").value,
+      dept: document.getElementById("dept").value,
+      objective: document.getElementById("objective").value,
+      skills: document.getElementById("skills").value,
+      achievements: document.getElementById("achievements").value,
+      certificates: document.getElementById("certificates").value,
+      projects: document.getElementById("projects").value,
+      assignments: document.getElementById("assignments").value,
+      attachments: attachments.length > 0 ? attachments : (existing ? existing.attachments || [] : [])
+    }
+
+    if(profile.name === ""){
+      alert("Enter name")
+      return
+    }
+
+    var users = getUsers()
+    var index = users.findIndex(u => String(u.id) === String(profile.id))
+    if(index !== -1){
+      users[index] = profile
+    } else {
+      users.push(profile)
+    }
+    saveUsers(users)
+
+    document.getElementById("status").innerHTML = "✅ Profile Saved Successfully!"
+
+    var profileLink = "profile-view.html?id=" + profile.id
+    var qr = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(profileLink)
+
+    document.getElementById("qrBox").innerHTML =
+      "<p>Share this profile</p>" +
+      "<img src='" + qr + "'>" +
+      "<br><br>" +
+      "<a class='btn' href='" + profileLink + "'>Open Profile</a>"
+  }
+
+  if(files.length > 0){
+    readFiles(files, save)
+  } else {
+    save([])
+  }
+}
+
+window.onload = function(){
+  var user = findUser()
+  if(user){
+    showForm(user)
+  }
+}
+</script>
+
+</body>
+</html>

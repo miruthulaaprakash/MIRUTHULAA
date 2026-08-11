@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentors – Collab Nexus</title>
+<meta name="description" content="Browse expert mentors in AI, Web Development, Data Science and UI/UX Design on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html" class="active">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>🎓 Available Mentors</h1>
+    <p class="section-description">Browse mentors with real expertise — connect, learn and grow together.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="mentor-profile.html">+ Create Mentor Profile</a>
+  </div>
+</div>
+
+<div class="page-section">
+  <div class="search-bar">
+    <input id="mentorSearch" type="text" placeholder="🔍 Search by name, expertise, or institution…" oninput="handleSearch()">
+  </div>
+
+  <div class="mentor-grid" id="mentorContainer"></div>
+</div>
+
+<script>
+/* ── helpers ── */
+function getMentors(){
+  return JSON.parse(localStorage.getItem("mentors")) || []
+}
+
+function saveMentors(list){
+  localStorage.setItem("mentors", JSON.stringify(list))
+}
+
+function getDefaultMentors(){
+  return [
+    {
+      id:"default-1",
+      name:"Dr. Arun Kumar",
+      domain:"AI & Machine Learning",
+      institution:"Anna University",
+      experience:"8 Years",
+      objective:"Guides students through AI/ML research, deep learning projects and paper presentations.",
+      description:"Passionate about making AI accessible to undergraduates. Mentors projects in neural networks, NLP and computer vision.",
+      skills:"Python, TensorFlow, Scikit-learn, Data Science",
+      achievements:"Published 12 research papers, mentored 80+ student ML projects"
+    },
+    {
+      id:"default-2",
+      name:"Priya Sharma",
+      domain:"Web Development",
+      institution:"PSG College of Technology",
+      experience:"6 Years",
+      objective:"Empowers students to build modern, scalable web applications from scratch.",
+      description:"Full-stack developer turned mentor. Specialises in React, Node.js and cloud deployments for student projects.",
+      skills:"HTML, CSS, JavaScript, React, Node.js",
+      achievements:"Built 20+ student web projects, leads coding bootcamps"
+    },
+    {
+      id:"default-3",
+      name:"Ragul chinnasamy",
+      domain:"Data Science",
+      institution:"VIT",
+      experience:"7 Years",
+      objective:"Helps students extract meaningful insights from data and build analytical projects.",
+      description:"Data scientist with expertise in predictive modelling, data visualisation and statistical analysis.",
+      skills:"Python, Pandas, Power BI, SQL, Machine Learning",
+      achievements:"Industry data projects, mentored 60+ analytics capstone students"
+    },
+    {
+      id:"default-4",
+      name:"Janaranjan",
+      domain:"UI/UX & Product Design",
+      institution:"SRM Institute of Science and Technology",
+      experience:"5 Years",
+      objective:"Coaches students on user-centred design thinking, prototyping and product strategy.",
+      description:"Product designer with a passion for beautiful, accessible interfaces. Helps students transform ideas into polished products.",
+      skills:"Figma, Adobe XD, User Research, Prototyping",
+      achievements:"Designed award-winning student apps, UX workshop facilitator"
+    }
+  ]
+}
+
+function getInitials(name){
+  return name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase()
+}
+
+function getAvatarColor(name){
+  const colors = [
+    'linear-gradient(135deg,#2563eb,#6180ff)',
+    'linear-gradient(135deg,#7c3aed,#a855f7)',
+    'linear-gradient(135deg,#0891b2,#06b6d4)',
+    'linear-gradient(135deg,#d97706,#f59e0b)'
+  ]
+  var idx = name.charCodeAt(0) % colors.length
+  return colors[idx]
+}
+
+function initializeDefaultMentors(){
+  var mentors = getMentors()
+  var hasDefaults = mentors.some(function(m){ return m.id && m.id.startsWith('default-') })
+  if(!hasDefaults){
+    var defaults = getDefaultMentors()
+    // prepend defaults that aren't already stored
+    defaults.forEach(function(d){
+      if(!mentors.find(function(m){ return String(m.id) === String(d.id) })){
+        mentors.unshift(d)
+      }
+    })
+    saveMentors(mentors)
+  }
+  return getMentors()
+}
+
+function buildCard(mentor){
+  var initials = getInitials(mentor.name || 'M')
+  var avatarBg = getAvatarColor(mentor.name || 'M')
+  var desc = mentor.description || mentor.objective || 'Experienced mentor ready to guide students.'
+  return `
+    <div class="card mentor-card">
+      <div class="mentor-card-header">
+        <div class="avatar-circle" style="background:${avatarBg}">${initials}</div>
+        <div class="mentor-card-info">
+          <h3>${mentor.name}</h3>
+          <p class="mentor-domain">${mentor.domain || 'Mentor'}</p>
+          <p class="mentor-institution">🏫 ${mentor.institution || ''}</p>
+        </div>
+      </div>
+
+      <div class="mentor-meta">
+        <span class="tag">⏱ ${mentor.experience || 'N/A'} exp</span>
+      </div>
+
+      <p class="mentor-desc">${desc}</p>
+
+      <div class="mentor-actions">
+        <button onclick="window.location.href='mentor-profile-view.html?id=${mentor.id || ''}'">View Profile</button>
+        <button onclick="connectMentor('${mentor.name}')" style="background:linear-gradient(135deg,#16a34a,#22c55e)">Connect</button>
+      </div>
+    </div>
+  `
+}
+
+function connectMentor(name){
+  alert('✅ Connection request sent to ' + name + '!')
+}
+
+function filterMentors(query){
+  var mentors = getMentors()
+  if(!query) return mentors
+  query = query.toLowerCase()
+  return mentors.filter(function(m){
+    return (
+      (m.name||'').toLowerCase().includes(query) ||
+      (m.domain||'').toLowerCase().includes(query) ||
+      (m.institution||'').toLowerCase().includes(query) ||
+      (m.objective||'').toLowerCase().includes(query)
+    )
+  })
+}
+
+function renderMentors(mentors){
+  var container = document.getElementById("mentorContainer")
+  container.innerHTML = ""
+
+  if(mentors.length === 0){
+    container.innerHTML = '<div class="no-results">No mentors found. Try a different search or create a new mentor profile.</div>'
+    return
+  }
+
+  mentors.forEach(function(mentor){
+    container.innerHTML += buildCard(mentor)
+  })
+}
+
+function handleSearch(){
+  var query = document.getElementById("mentorSearch").value
+  renderMentors(filterMentors(query))
+}
+
+window.onload = function(){
+  var mentors = initializeDefaultMentors()
+  renderMentors(mentors)
+}
+</script>
+
+</body>
+</html>

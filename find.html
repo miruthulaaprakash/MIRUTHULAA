@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Teammates – Collab Nexus</title>
+<meta name="description" content="Find student teammates with the right skills for your project on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html" class="active">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>🤝 Find Teammates</h1>
+    <p class="section-description">Connect with students who have the skills you need to build great projects.</p>
+  </div>
+</div>
+
+<!-- Add Yourself Form -->
+<div class="form-panel" style="max-width:1180px; margin:0 auto 20px; padding:22px 28px;">
+  <h2>👤 Add Yourself</h2>
+  <div class="form-inline-grid">
+    <div class="field-group">
+      <label for="name">Your Name</label>
+      <input type="text" id="name" placeholder="Enter your full name…">
+    </div>
+    <div class="field-group">
+      <label for="skill">Technical Skills</label>
+      <input type="text" id="skill" placeholder="e.g. React, Python, UI/UX…">
+    </div>
+    <div class="field-group" style="grid-column:1/-1;">
+      <label for="bio">Short Bio / Project Interest</label>
+      <textarea id="bio" rows="2" placeholder="Briefly describe yourself or what project you're looking for…"></textarea>
+    </div>
+  </div>
+  <div style="margin-top:14px;">
+    <button onclick="addMember()">➕ Add to List</button>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="search-bar">
+  <input type="text" id="teammateSearch" placeholder="🔍 Search teammates by name or skill…" oninput="searchTeammates()">
+</div>
+
+<!-- Available Teammates -->
+<div class="section-header">
+  <h2>👥 Available Teammates</h2>
+  <span id="teammateCount" style="font-size:13px; color:#64748b;"></span>
+</div>
+
+<div class="teammate-grid" id="teamList" style="padding-bottom:40px;"></div>
+
+<script>
+/* ── helpers ── */
+function getMembers(){
+  return JSON.parse(localStorage.getItem("members")) || []
+}
+
+function saveMembers(members){
+  localStorage.setItem("members", JSON.stringify(members))
+}
+
+function getInitials(name){
+  return name.split(' ').map(function(w){ return w[0] }).join('').substring(0,2).toUpperCase()
+}
+
+function getAvatarColor(name){
+  var colors = [
+    'linear-gradient(135deg,#2563eb,#6180ff)',
+    'linear-gradient(135deg,#7c3aed,#a855f7)',
+    'linear-gradient(135deg,#0891b2,#06b6d4)',
+    'linear-gradient(135deg,#d97706,#f59e0b)',
+    'linear-gradient(135deg,#16a34a,#22c55e)',
+    'linear-gradient(135deg,#dc2626,#f87171)'
+  ]
+  var idx = (name || '').charCodeAt(0) % colors.length
+  return colors[idx]
+}
+
+/* ── check for ?idea= param ── */
+window.onload = function(){
+  var params = new URLSearchParams(window.location.search)
+  var idea   = params.get("idea")
+  if(idea){
+    var bioField = document.getElementById("bio")
+    if(bioField) bioField.value = "Looking for teammates for: " + idea
+  }
+  displayMembers()
+}
+
+/* ── Add ── */
+function addMember(){
+  var name  = document.getElementById("name").value.trim()
+  var skill = document.getElementById("skill").value.trim()
+  var bio   = document.getElementById("bio").value.trim()
+
+  if(name === ""){
+    alert("Please enter your name")
+    return
+  }
+
+  var members = getMembers()
+  members.unshift({name:name, skill:skill, bio:bio})
+  saveMembers(members)
+  displayMembers()
+
+  document.getElementById("name").value  = ""
+  document.getElementById("skill").value = ""
+  document.getElementById("bio").value   = ""
+}
+
+/* ── Display ── */
+function displayMembers(){
+  var members = getMembers()
+  renderMembers(members, false)
+}
+
+/* ── Search ── */
+function searchTeammates(){
+  var q       = (document.getElementById("teammateSearch").value || "").toLowerCase()
+  var members = getMembers()
+
+  if(!q){
+    renderMembers(members, false)
+    return
+  }
+
+  var filtered = members.filter(function(m, idx){
+    m._origIndex = idx
+    return (m.name||"").toLowerCase().includes(q) ||
+           (m.skill||"").toLowerCase().includes(q) ||
+           (m.bio||"").toLowerCase().includes(q)
+  })
+  renderMembers(filtered, true)
+}
+
+/* ── Render ── */
+function renderMembers(members, useOrigIndex){
+  var list = document.getElementById("teamList")
+  list.innerHTML = ""
+
+  var countEl = document.getElementById("teammateCount")
+  if(countEl) countEl.textContent = members.length + " student" + (members.length !== 1 ? "s" : "")
+
+  if(members.length === 0){
+    list.innerHTML = '<div class="no-results" style="grid-column:1/-1;">No teammates found. Add yourself to get started!</div>'
+    return
+  }
+
+  members.forEach(function(m, i){
+    var realIndex = useOrigIndex && m._origIndex !== undefined ? m._origIndex : i
+    var initials  = getInitials(m.name || '?')
+    var avatarBg  = getAvatarColor(m.name || '')
+
+    var div = document.createElement("div")
+    div.className = "card teammate-card"
+    div.innerHTML =
+      '<div class="teammate-card-header">' +
+        '<div class="avatar-circle sm" style="background:' + avatarBg + '">' + initials + '</div>' +
+        '<div class="teammate-card-info">' +
+          '<h3>' + escHtml(m.name) + '</h3>' +
+          '<p class="teammate-skills">🔧 ' + escHtml(m.skill || 'Skills not listed') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<p class="teammate-bio">' + escHtml(m.bio || 'Looking to collaborate on interesting projects.') + '</p>' +
+      '<div class="teammate-actions">' +
+        '<button onclick="connectUser(\'' + escHtml(m.name).replace(/'/g,"\\'") + '\')" style="background:linear-gradient(135deg,#16a34a,#22c55e)">🤝 Connect</button>' +
+        '<button onclick="editMember(' + realIndex + ')" style="background:linear-gradient(135deg,#d97706,#f59e0b)">✏️ Edit</button>' +
+        '<button onclick="deleteMember(' + realIndex + ')" style="background:linear-gradient(135deg,#dc2626,#ef4444)">🗑 Delete</button>' +
+      '</div>'
+
+    list.appendChild(div)
+  })
+}
+
+/* ── Connect ── */
+function connectUser(name){
+  alert("✅ Request Sent to " + name + " Successfully!")
+}
+
+/* ── Delete ── */
+function deleteMember(index){
+  var members = getMembers()
+  members.splice(index, 1)
+  saveMembers(members)
+  displayMembers()
+}
+
+/* ── Edit ── */
+function editMember(index){
+  var members = getMembers()
+  if(!members[index]) return
+
+  document.getElementById("name").value  = members[index].name
+  document.getElementById("skill").value = members[index].skill || ""
+  document.getElementById("bio").value   = members[index].bio   || ""
+
+  deleteMember(index)
+  document.getElementById("name").focus()
+}
+
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+</script>
+
+</body>
+</html>

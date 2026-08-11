@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentor Profile View – Collab Nexus</title>
+<meta name="description" content="Review mentor details, certificates, projects and assignments on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html" class="active">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>🎓 Mentor Profile</h1>
+    <p class="section-description">Review mentor details, shared certificates, projects and assignments.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="mentors.html">All Mentors</a>
+    <a class="btn btn-outline" href="mentor-profile.html">Create / Edit Mentor</a>
+  </div>
+</div>
+
+<div id="box" class="card"></div>
+
+<script>
+function getId(){
+  var params = new URLSearchParams(window.location.search)
+  return params.get("id")
+}
+
+function getMentors(){
+  return JSON.parse(localStorage.getItem("mentors")) || []
+}
+
+function getDefaultMentors(){
+  return [
+    {id:"default-1", name:"Dr Ravi", domain:"AI & Machine Learning Expert", institution:"Tech University", experience:"10 years", objective:"Guides students on AI and deep learning projects.", skills:"Python, Machine Learning, Data Science", achievements:"Published ML research papers, mentored 50+ student projects", certificates:"AI Certification, Data Science Bootcamp", projects:"AI research platform, predictive analytics dashboard", assignments:"Machine learning modules, data analysis tasks"},
+    {id:"default-2", name:"Ms Anitha", domain:"Startup Advisor", institution:"Innovation Hub", experience:"8 years", objective:"Helps startups build products and pitch ideas.", skills:"Entrepreneurship, Business Strategy, Pitch Coaching", achievements:"Supported multiple startup launches, won innovation awards", certificates:"Startup Mentorship Program, Business Strategy Course", projects:"Startup accelerator programs, investor pitch workshops", assignments:"Product-market fit reviews, pitch deck mentoring"},
+    {id:"default-3", name:"Mr Karthik", domain:"Full Stack Developer", institution:"Software Labs", experience:"7 years", objective:"Supports web and mobile development projects.", skills:"JavaScript, React, Node.js", achievements:"Delivered enterprise web projects, led developer training sessions", certificates:"Full Stack Certification, Web App Development", projects:"E-commerce platforms, mobile app backends", assignments:"Full stack project mentoring, UI/UX review"}
+  ]
+}
+
+function saveMentors(list){
+  localStorage.setItem("mentors", JSON.stringify(list))
+}
+
+function findMentor(){
+  var id = getId()
+  return getMentors().find(m => String(m.id) === String(id)) || getDefaultMentors().find(m => String(m.id) === String(id))
+}
+
+function renderList(text){
+  if(!text) return ""
+  return `<ul class='item-list'>${text.split(",").map(item => `<li>${item.trim()}</li>`).join("")}</ul>`
+}
+
+function renderAttachments(files){
+  if(!files || !files.length) return ""
+  return `<div class='item-list'><h3>Attachments</h3>${files.map(file => `<li><a target='_blank' href='${file.data}'>${file.name}</a></li>`).join("")}</div>`
+}
+
+function showForm(mentor){
+  var data = mentor || {}
+  document.getElementById("box").innerHTML = `
+    <h3>${mentor ? 'Edit Mentor Profile' : 'Create Mentor Profile'}</h3>
+    <input id='name' placeholder='Name' value='${data.name || ""}'>
+    <input id='email' placeholder='Email' value='${data.email || ""}'>
+    <input id='domain' placeholder='Domain / Expertise' value='${data.domain || ""}'>
+    <input id='institution' placeholder='Institution / Organization' value='${data.institution || ""}'>
+    <input id='experience' placeholder='Experience' value='${data.experience || ""}'>
+    <textarea id='objective' placeholder='Mentoring objective'>${data.objective || ""}</textarea>
+    <input id='skills' placeholder='Skills / Focus areas' value='${data.skills || ""}'>
+    <input id='achievements' placeholder='Achievements' value='${data.achievements || ""}'>
+    <textarea id='certificates' placeholder='Certificates'>${data.certificates || ""}</textarea>
+    <textarea id='projects' placeholder='Projects'>${data.projects || ""}</textarea>
+    <textarea id='assignments' placeholder='Assignments'>${data.assignments || ""}</textarea>
+    <label class='small-note'>Upload new attachment files to add more</label>
+    <input type='file' id='attachments' multiple>
+    <button onclick='saveProfile()'>Save</button>
+  `
+}
+
+function readFiles(files, callback){
+  if(!files || files.length === 0){
+    callback([])
+    return
+  }
+  var attachments = []
+  var loaded = 0
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader()
+    reader.onload = function(){
+      attachments.push({name: file.name, data: reader.result})
+      loaded++
+      if(loaded === files.length){
+        callback(attachments)
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function saveProfile(){
+  var current = findMentor()
+  var files = document.getElementById("attachments").files
+
+  function doSave(newAttachments){
+    var mentor = {
+      id: getId(),
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      domain: document.getElementById("domain").value,
+      institution: document.getElementById("institution").value,
+      experience: document.getElementById("experience").value,
+      objective: document.getElementById("objective").value,
+      skills: document.getElementById("skills").value,
+      achievements: document.getElementById("achievements").value,
+      certificates: document.getElementById("certificates").value,
+      projects: document.getElementById("projects").value,
+      assignments: document.getElementById("assignments").value,
+      attachments: newAttachments.length > 0 ? newAttachments : (current ? current.attachments || [] : [])
+    }
+    var mentors = getMentors()
+    var index = mentors.findIndex(m => String(m.id) === String(mentor.id))
+    if(index !== -1){
+      mentors[index] = mentor
+    } else {
+      mentors.push(mentor)
+    }
+    saveMentors(mentors)
+    display()
+  }
+
+  if(files.length > 0){
+    readFiles(files, doSave)
+  } else {
+    doSave([])
+  }
+}
+
+function display(){
+  var mentor = findMentor()
+  if(!mentor){
+    showForm()
+    return
+  }
+  var attachmentsHTML = renderAttachments(mentor.attachments)
+  document.getElementById("box").innerHTML = `
+    <div class='profile-grid'>
+      <div class='profile-card'>
+        <h2>${mentor.name}</h2>
+        <p><strong>Email:</strong> ${mentor.email}</p>
+        <p><strong>Domain:</strong> ${mentor.domain}</p>
+        <p><strong>Institution:</strong> ${mentor.institution}</p>
+        <p><strong>Experience:</strong> ${mentor.experience}</p>
+      </div>
+      <div class='detail-card'>
+        <h3>Objective</h3>
+        <p>${mentor.objective}</p>
+        <h3>Skills</h3>
+        ${renderList(mentor.skills)}
+        <h3>Achievements</h3>
+        ${renderList(mentor.achievements)}
+        <h3>Certificates</h3>
+        ${renderList(mentor.certificates)}
+        <h3>Projects</h3>
+        ${renderList(mentor.projects)}
+        <h3>Assignments</h3>
+        ${renderList(mentor.assignments)}
+        ${attachmentsHTML}
+        <div class='button-group'>
+          <button onclick='editProfile()'>Edit</button>
+          <button onclick='deleteProfile()'>Delete</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function editProfile(){
+  var mentor = findMentor()
+  showForm(mentor)
+}
+
+function deleteProfile(){
+  if(!confirm("Delete mentor profile?")) return
+  var mentors = getMentors()
+  var id = getId()
+  mentors = mentors.filter(m => String(m.id) !== String(id))
+  saveMentors(mentors)
+  showForm()
+}
+
+window.onload = display
+</script>
+
+</body>
+</html>

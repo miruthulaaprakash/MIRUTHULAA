@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Profile View – Collab Nexus</title>
+<meta name="description" content="View student profile details, certificates, projects and assignments on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html" class="active">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>👤 Student Profile</h1>
+    <p class="section-description">View your profile details, certificates, projects and assignments in one place.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="profile.html">Create / Edit Profile</a>
+    <a class="btn btn-outline" href="index.html">Home</a>
+  </div>
+</div>
+
+<div id="box" class="card"></div>
+
+<script>
+function getId(){
+  var params = new URLSearchParams(window.location.search)
+  return params.get("id")
+}
+
+function getUsers(){
+  return JSON.parse(localStorage.getItem("users")) || []
+}
+
+function saveUsers(users){
+  localStorage.setItem("users", JSON.stringify(users))
+}
+
+function findUser(){
+  var id = getId()
+  var users = getUsers()
+  return users.find(u => String(u.id) === String(id))
+}
+
+function showForm(user){
+  var data = user || {}
+  document.getElementById("box").innerHTML = `
+    <h3>${user ? 'Edit Profile' : 'Create Profile'}</h3>
+    <input id='name' placeholder='Name' value='${data.name || ""}'>
+    <input id='email' placeholder='Email' value='${data.email || ""}'>
+    <input id='year' placeholder='Year' value='${data.year || ""}'>
+    <input id='regno' placeholder='Register Number' value='${data.regno || ""}'>
+    <input id='dept' placeholder='Department' value='${data.dept || ""}'>
+    <textarea id='objective' placeholder='Objective'>${data.objective || ""}</textarea>
+    <input id='skills' placeholder='Technical Skills' value='${data.skills || ""}'>
+    <input id='achievements' placeholder='Achievements' value='${data.achievements || ""}'>
+    <textarea id='certificates' placeholder='Certificates (comma separated)'>${data.certificates || ""}</textarea>
+    <textarea id='projects' placeholder='Projects (comma separated)'>${data.projects || ""}</textarea>
+    <textarea id='assignments' placeholder='Assignments or tasks completed (comma separated)'>${data.assignments || ""}</textarea>
+    <label class='small-note'>Upload new attachments to add files</label>
+    <input type='file' id='attachments' multiple>
+    <button onclick='saveProfile()'>Save</button>
+  `
+}
+
+function readFiles(files, callback){
+  if(!files || files.length === 0){
+    callback([])
+    return
+  }
+
+  var attachments = []
+  var loaded = 0
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader()
+    reader.onload = function(){
+      attachments.push({name: file.name, data: reader.result})
+      loaded++
+      if(loaded === files.length){
+        callback(attachments)
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function saveProfile(){
+  var current = findUser()
+  var files = document.getElementById("attachments").files
+
+  function doSave(newAttachments){
+    var profile = {
+      id: getId(),
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      year: document.getElementById("year").value,
+      regno: document.getElementById("regno").value,
+      dept: document.getElementById("dept").value,
+      objective: document.getElementById("objective").value,
+      skills: document.getElementById("skills").value,
+      achievements: document.getElementById("achievements").value,
+      certificates: document.getElementById("certificates").value,
+      projects: document.getElementById("projects").value,
+      assignments: document.getElementById("assignments").value,
+      phone: current ? current.phone || "" : "",
+      attachments: newAttachments.length > 0 ? newAttachments : (current ? current.attachments || [] : [])
+    }
+
+    if(profile.name === ""){
+      alert("Enter name")
+      return
+    }
+
+    var users = getUsers()
+    var index = users.findIndex(u => String(u.id) === String(profile.id))
+    if(index !== -1){
+      users[index] = profile
+    } else {
+      users.push(profile)
+    }
+    saveUsers(users)
+    display()
+  }
+
+  if(files.length > 0){
+    readFiles(files, doSave)
+  } else {
+    doSave([])
+  }
+}
+
+function renderList(text){
+  if(!text) return ""
+  return `<ul class='item-list'>${text.split(",").map(item => `<li>${item.trim()}</li>`).join("")}</ul>`
+}
+
+function renderAttachments(files){
+  if(!files || !files.length) return ""
+  return `<div class='item-list'><h3>Attachments</h3>${files.map(file => `<li><a target='_blank' href='${file.data}'>${file.name}</a></li>`).join("")}</div>`
+}
+
+function display(){
+  var u = findUser()
+  if(!u){
+    showForm()
+    return
+  }
+
+  var certificatesHTML = renderList(u.certificates)
+  var projectsHTML = renderList(u.projects)
+  var assignmentsHTML = renderList(u.assignments)
+  var attachmentsHTML = renderAttachments(u.attachments)
+
+  document.getElementById("box").innerHTML = `
+    <div class='profile-grid'>
+      <div class='profile-card'>
+        <h2>${u.name}</h2>
+        <p><strong>Email:</strong> ${u.email}</p>
+        <p><strong>Year:</strong> ${u.year}</p>
+        <p><strong>Register No:</strong> ${u.regno}</p>
+        <p><strong>Department:</strong> ${u.dept}</p>
+        <h3>Technical Skills</h3>
+        ${renderList(u.skills)}
+      </div>
+      <div class='detail-card'>
+        <h3>Objective</h3>
+        <p>${u.objective}</p>
+        <h3>Achievements</h3>
+        ${renderList(u.achievements)}
+        <h3>Certificates</h3>
+        ${certificatesHTML || '<p>None added</p>'}
+        <h3>Projects</h3>
+        ${projectsHTML || '<p>None added</p>'}
+        <h3>Assignments</h3>
+        ${assignmentsHTML || '<p>None added</p>'}
+        ${attachmentsHTML}
+        <div class='button-group'>
+          <button onclick='editProfile()'>Edit</button>
+          <button onclick='deleteProfile()'>Delete</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function editProfile(){
+  var user = findUser()
+  showForm(user)
+}
+
+function deleteProfile(){
+  if(!confirm("Delete profile?")) return
+  var users = getUsers()
+  var id = getId()
+  users = users.filter(x => String(x.id) !== String(id))
+  saveUsers(users)
+  showForm()
+}
+
+window.onload = display
+</script>
+
+</body>
+</html>

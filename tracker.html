@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback History – Collab Nexus</title>
+<meta name="description" content="Track project feedback history and mentoring streaks on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>📊 Feedback History</h1>
+    <p class="section-description">Track your project feedback.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline" href="index.html">← Home</a>
+  </div>
+</div>
+
+<!-- Form -->
+<div class="form-panel" style="max-width:760px; margin:0 auto 20px; padding:22px 28px;">
+  <h2>📝 Add Feedback</h2>
+  <div class="field-group" style="margin-bottom:12px;">
+    <label for="project">Project Name</label>
+    <input id="project" placeholder="Enter project name…">
+  </div>
+  <div class="field-group" style="margin-bottom:12px;">
+    <label for="feedback">Your Feedback</label>
+    <textarea id="feedback" rows="3" placeholder="Describe your feedback or progress notes…"></textarea>
+  </div>
+  <div class="field-group" style="margin-bottom:16px;">
+    <label for="userPic">Your Profile Photo</label>
+    <input type="file" id="userPic">
+  </div>
+  <button onclick="addFeedback()">➕ Add Feedback</button>
+</div>
+
+<!-- History -->
+<div class="section-header" style="max-width:760px;">
+  <h2>📋 Feedback History</h2>
+</div>
+
+<div id="history" style="max-width:760px; margin:0 auto; padding:0 20px 40px;"></div>
+
+<script>
+function getRandomUser(){
+  var names = ["Arun","Kaviya","Rahul","Sneha","Vikram","Divya","Ajay","Meena"]
+  var name  = names[Math.floor(Math.random() * names.length)]
+  var email = name.toLowerCase() + Math.floor(Math.random() * 100) + "@mail.com"
+  var img   = "https://i.pravatar.cc/100?img=" + (Math.floor(Math.random() * 70) + 1)
+  return {name:name, email:email, img:img}
+}
+
+function getHistory(){
+  return JSON.parse(localStorage.getItem("feedbacks")) || []
+}
+
+function saveHistory(data){
+  localStorage.setItem("feedbacks", JSON.stringify(data))
+}
+
+function addFeedback(){
+  var project  = document.getElementById("project").value
+  var feedback = document.getElementById("feedback").value
+  var file     = document.getElementById("userPic").files[0]
+
+  if(project === "" || feedback === ""){
+    alert("Fill all fields")
+    return
+  }
+
+  if(file){
+    var reader = new FileReader()
+    reader.onload = function(){
+      saveData(reader.result)
+    }
+    reader.readAsDataURL(file)
+  } else {
+    alert("Please upload your profile image")
+  }
+}
+
+function saveData(userImage){
+  var target = getRandomUser()
+  var data   = getHistory()
+
+  data.push({
+    project:     document.getElementById("project").value,
+    feedback:    document.getElementById("feedback").value,
+    userPic:     userImage,
+    targetName:  target.name,
+    targetEmail: target.email,
+    targetPic:   target.img,
+    streak:      Math.floor(Math.random() * 10) + 1
+  })
+
+  saveHistory(data)
+  display()
+
+  document.getElementById("project").value  = ""
+  document.getElementById("feedback").value = ""
+  document.getElementById("userPic").value  = ""
+}
+
+function display(){
+  var data      = getHistory()
+  var container = document.getElementById("history")
+  container.innerHTML = ""
+
+  if(data.length === 0){
+    container.innerHTML = '<div class="no-results">No feedback history yet. Add your first feedback above!</div>'
+    return
+  }
+
+  data.forEach(function(item){
+    container.innerHTML +=
+      '<div class="history-card">' +
+        '<div class="history-left">' +
+          '<img src="' + item.userPic + '" alt="Your photo">' +
+        '</div>' +
+        '<div class="history-middle">' +
+          '<h4>' + item.project + '</h4>' +
+          '<p>' + item.feedback + '</p>' +
+        '</div>' +
+        '<div class="history-right">' +
+          '<div class="streak-badge">🔥 ' + item.streak + '</div>' +
+          '<img src="' + item.targetPic + '" alt="' + item.targetName + '">' +
+          '<div style="font-size:13px; font-weight:700; margin-top:4px;">' + item.targetName + '</div>' +
+          '<div style="font-size:11px; color:#64748b;">' + item.targetEmail + '</div>' +
+        '</div>' +
+      '</div>'
+  })
+}
+
+display()
+</script>
+
+</body>
+</html>

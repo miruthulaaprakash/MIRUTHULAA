@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Ideas – Collab Nexus</title>
+<meta name="description" content="Share your project ideas and collaborate with fellow students on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>💡 Share Your Ideas</h1>
+    <p class="section-description">Post your project ideas and let others collaborate, like and build on them.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline" href="ideas.html">← Back to Idea Board</a>
+  </div>
+</div>
+
+<!-- Post Idea Form -->
+<div class="form-panel" style="max-width:1180px; margin:0 auto 20px; padding:22px 28px;">
+  <h2>📝 Post an Idea</h2>
+  <div class="form-inline-grid">
+    <div class="field-group">
+      <label for="ideaTitle">Idea Title</label>
+      <input type="text" id="ideaTitle" placeholder="Enter a catchy idea title…">
+    </div>
+    <div class="field-group">
+      <label for="ideaCategory">Category / Technology</label>
+      <input type="text" id="ideaCategory" placeholder="e.g. AI, Web Dev, IoT, Mobile…">
+    </div>
+    <div class="field-group">
+      <label for="ideaAuthor">Posted By</label>
+      <input type="text" id="ideaAuthor" placeholder="Your name…">
+    </div>
+    <div class="field-group" style="grid-column:1/-1;">
+      <label for="ideaDesc">Description</label>
+      <textarea id="ideaDesc" rows="3" placeholder="Briefly describe your idea…"></textarea>
+    </div>
+  </div>
+  <div style="margin-top:14px;">
+    <button onclick="addIdea()">🚀 Post Idea</button>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="search-filter-row">
+  <input type="text" id="ideaSearch" placeholder="🔍 Search ideas…" oninput="filterIdeas()" style="flex:1;">
+  <select class="filter-select" id="categoryFilter" onchange="filterIdeas()">
+    <option value="">All Categories</option>
+    <option value="AI">AI / ML</option>
+    <option value="Web">Web Dev</option>
+    <option value="Mobile">Mobile</option>
+    <option value="Data">Data Science</option>
+    <option value="IoT">IoT</option>
+    <option value="Design">UI/UX</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
+<!-- Idea Cards -->
+<div class="section-header">
+  <h2>📋 Posted Ideas</h2>
+  <span id="ideaCount" style="font-size:13px; color:#64748b;"></span>
+</div>
+
+<div class="idea-grid" id="ideaList" style="padding-bottom:40px;"></div>
+
+<script>
+function getIdeas(){
+  return JSON.parse(localStorage.getItem("ideas")) || []
+}
+
+function saveIdeas(ideas){
+  localStorage.setItem("ideas", JSON.stringify(ideas))
+}
+
+function addIdea(){
+  var title    = document.getElementById("ideaTitle").value.trim()
+  var desc     = document.getElementById("ideaDesc").value.trim()
+  var category = document.getElementById("ideaCategory").value.trim()
+  var author   = document.getElementById("ideaAuthor").value.trim()
+
+  if(title === ""){
+    alert("Please enter an idea title")
+    return
+  }
+
+  var ideas = getIdeas()
+  ideas.unshift({
+    title:    title,
+    desc:     desc,
+    category: category || "Other",
+    author:   author   || "Anonymous",
+    likes:    0,
+    created:  new Date().toISOString()
+  })
+
+  saveIdeas(ideas)
+  displayIdeas()
+
+  document.getElementById("ideaTitle").value    = ""
+  document.getElementById("ideaDesc").value     = ""
+  document.getElementById("ideaCategory").value = ""
+  document.getElementById("ideaAuthor").value   = ""
+}
+
+function deleteIdea(index){
+  var ideas = getIdeas()
+  ideas.splice(index, 1)
+  saveIdeas(ideas)
+  displayIdeas()
+}
+
+function editIdea(index){
+  var ideas = getIdeas()
+  if(!ideas[index]) return
+
+  document.getElementById("ideaTitle").value    = ideas[index].title
+  document.getElementById("ideaDesc").value     = ideas[index].desc
+  document.getElementById("ideaCategory").value = ideas[index].category || ""
+  document.getElementById("ideaAuthor").value   = ideas[index].author   || ""
+
+  deleteIdea(index)
+  document.getElementById("ideaTitle").focus()
+}
+
+function likeIdea(index){
+  var ideas = getIdeas()
+  if(!ideas[index]) return
+  ideas[index].likes = (ideas[index].likes || 0) + 1
+  saveIdeas(ideas)
+  displayIdeas()
+}
+
+function findTeammates(title){
+  window.location.href = "find.html?idea=" + encodeURIComponent(title)
+}
+
+function filterIdeas(){
+  var q         = (document.getElementById("ideaSearch").value || "").toLowerCase()
+  var catFilter = document.getElementById("categoryFilter").value.toLowerCase()
+  var ideas     = getIdeas()
+
+  var filtered = ideas.filter(function(idea, idx){
+    idea._origIndex = idx
+    var matchQ = !q || (
+      (idea.title||"").toLowerCase().includes(q) ||
+      (idea.desc||"").toLowerCase().includes(q) ||
+      (idea.author||"").toLowerCase().includes(q)
+    )
+    var matchCat = !catFilter || (idea.category||"").toLowerCase().includes(catFilter)
+    return matchQ && matchCat
+  })
+
+  renderIdeas(filtered, true)
+}
+
+function renderIdeas(ideas, useOrigIndex){
+  var list = document.getElementById("ideaList")
+  if(!list) return
+  list.innerHTML = ""
+
+  var count = document.getElementById("ideaCount")
+  if(count) count.textContent = ideas.length + " idea" + (ideas.length !== 1 ? "s" : "")
+
+  if(ideas.length === 0){
+    list.innerHTML = '<div class="no-results" style="grid-column:1/-1;">No ideas found. Be the first to post one!</div>'
+    return
+  }
+
+  ideas.forEach(function(idea, i){
+    var realIndex = useOrigIndex && idea._origIndex !== undefined ? idea._origIndex : i
+    var catColor  = getCatColor(idea.category)
+    var dateStr   = idea.created ? new Date(idea.created).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : ''
+
+    var div = document.createElement("div")
+    div.className = "card idea-card"
+    div.innerHTML =
+      '<div class="idea-card-top">' +
+        '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px;">' +
+          '<h3>' + escHtml(idea.title) + '</h3>' +
+          '<span class="tag ' + catColor + '">' + escHtml(idea.category || 'Other') + '</span>' +
+        '</div>' +
+        '<p class="idea-desc">' + escHtml(idea.desc || 'No description provided.') + '</p>' +
+      '</div>' +
+      '<div class="idea-meta">' +
+        '<span>👤 ' + escHtml(idea.author || 'Anonymous') + '</span>' +
+        '<span style="color:#d1d5db;">•</span>' +
+        '<span>📅 ' + dateStr + '</span>' +
+        '<span style="margin-left:auto;" class="likes-count" onclick="likeIdea(' + realIndex + ')">❤️ ' + (idea.likes || 0) + '</span>' +
+      '</div>' +
+      '<div class="idea-actions">' +
+        '<button onclick="editIdea(' + realIndex + ')" style="background:linear-gradient(135deg,#d97706,#f59e0b)">✏️ Edit</button>' +
+        '<button onclick="deleteIdea(' + realIndex + ')" style="background:linear-gradient(135deg,#dc2626,#ef4444)">🗑 Delete</button>' +
+        '<button onclick="findTeammates(\'' + escHtml(idea.title).replace(/'/g,"\\'") + '\')" style="background:linear-gradient(135deg,#16a34a,#22c55e)">🤝 Teammates</button>' +
+      '</div>'
+    list.appendChild(div)
+  })
+}
+
+function displayIdeas(){
+  var ideas = getIdeas()
+  renderIdeas(ideas, false)
+}
+
+function getCatColor(cat){
+  if(!cat) return ''
+  var c = cat.toLowerCase()
+  if(c.includes('ai') || c.includes('ml')) return 'tag-orange'
+  if(c.includes('data')) return 'tag-green'
+  return ''
+}
+
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+window.onload = function(){
+  displayIdeas()
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Mentor Profile – Collab Nexus</title>
+<meta name="description" content="Create your mentor profile on Collab Nexus to guide student projects.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html" class="active">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>🎓 Create Mentor Profile</h1>
+    <p class="section-description">Share your expertise, certificates, projects, and assignments to support students.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline" href="mentors.html">Back to Mentors</a>
+  </div>
+</div>
+
+<section class="form-card">
+<h2>Mentor Details</h2>
+<div class="form-grid">
+  <div class="field-group">
+    <label>Name</label>
+    <input type="text" id="name" placeholder="Enter Name">
+  </div>
+  <div class="field-group">
+    <label>Email</label>
+    <input type="text" id="email" placeholder="Enter Email">
+  </div>
+  <div class="field-group">
+    <label>Domain / Expertise</label>
+    <input type="text" id="domain" placeholder="Domain / Expertise">
+  </div>
+  <div class="field-group">
+    <label>Institution / Organization</label>
+    <input type="text" id="institution" placeholder="Institution / Organization">
+  </div>
+  <div class="field-group">
+    <label>Experience</label>
+    <input type="text" id="experience" placeholder="Experience">
+  </div>
+  <div class="field-group">
+    <label>Mentoring Objective</label>
+    <textarea id="objective" placeholder="Describe your mentoring goals and what you want to help students achieve"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Skills / Focus areas</label>
+    <input type="text" id="skills" placeholder="Comma separated">
+  </div>
+  <div class="field-group">
+    <label>Achievements</label>
+    <input type="text" id="achievements" placeholder="Comma separated">
+  </div>
+  <div class="field-group">
+    <label>Certificates</label>
+    <textarea id="certificates" placeholder="Certificates (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Projects</label>
+    <textarea id="projects" placeholder="Projects / published work (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label>Assignments</label>
+    <textarea id="assignments" placeholder="Assignments / tasks completed (comma separated)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="small-note">Upload attachments for certificates, projects, or assignments</label>
+    <input type="file" id="attachments" multiple>
+  </div>
+</div>
+<div style="margin-top:24px; text-align:right;">
+  <button onclick="saveProfile()">Save Mentor Profile</button>
+</div>
+</section>
+
+<div id="status" class="status-box"></div>
+<div id="qrBox" class="share-box"></div>
+
+<script>
+function getId(){
+  var params = new URLSearchParams(window.location.search)
+  var id = params.get("id")
+  if(!id){
+    id = Date.now().toString()
+  }
+  return id
+}
+
+function getMentors(){
+  return JSON.parse(localStorage.getItem("mentors")) || []
+}
+
+function saveMentors(list){
+  localStorage.setItem("mentors", JSON.stringify(list))
+}
+
+function findMentor(){
+  var id = getId()
+  return getMentors().find(m => String(m.id) === String(id))
+}
+
+function showForm(mentor){
+  if(!mentor) return
+  document.getElementById("name").value = mentor.name || ""
+  document.getElementById("email").value = mentor.email || ""
+  document.getElementById("domain").value = mentor.domain || ""
+  document.getElementById("institution").value = mentor.institution || ""
+  document.getElementById("experience").value = mentor.experience || ""
+  document.getElementById("objective").value = mentor.objective || ""
+  document.getElementById("skills").value = mentor.skills || ""
+  document.getElementById("achievements").value = mentor.achievements || ""
+  document.getElementById("certificates").value = mentor.certificates || ""
+  document.getElementById("projects").value = mentor.projects || ""
+  document.getElementById("assignments").value = mentor.assignments || ""
+}
+
+function readFiles(files, callback){
+  if(!files || files.length === 0){
+    callback([])
+    return
+  }
+  var attachments = []
+  var loaded = 0
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader()
+    reader.onload = function(){
+      attachments.push({name: file.name, data: reader.result})
+      loaded++
+      if(loaded === files.length){
+        callback(attachments)
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function saveProfile(){
+  var existing = findMentor()
+  var files = document.getElementById("attachments").files
+
+  function doSave(newAttachments){
+    var profile = {
+      id: getId(),
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      domain: document.getElementById("domain").value,
+      institution: document.getElementById("institution").value,
+      experience: document.getElementById("experience").value,
+      objective: document.getElementById("objective").value,
+      skills: document.getElementById("skills").value,
+      achievements: document.getElementById("achievements").value,
+      certificates: document.getElementById("certificates").value,
+      projects: document.getElementById("projects").value,
+      assignments: document.getElementById("assignments").value,
+      attachments: newAttachments.length > 0 ? newAttachments : (existing ? existing.attachments || [] : [])
+    }
+
+    if(profile.name === ""){
+      alert("Enter name")
+      return
+    }
+
+    var mentors = getMentors()
+    var index = mentors.findIndex(m => String(m.id) === String(profile.id))
+    if(index !== -1){
+      mentors[index] = profile
+    } else {
+      mentors.push(profile)
+    }
+    saveMentors(mentors)
+
+    document.getElementById("status").innerHTML = "✅ Mentor Profile Saved Successfully!"
+    var profileLink = "mentor-profile-view.html?id=" + profile.id
+    var qr = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(profileLink)
+
+    document.getElementById("qrBox").innerHTML =
+      "<p>Share this mentor profile</p>" +
+      "<img src='" + qr + "'>" +
+      "<br><br>" +
+      "<a class='btn' href='" + profileLink + "'>Open Mentor Profile</a>"
+  }
+
+  if(files.length > 0){
+    readFiles(files, doSave)
+  } else {
+    doSave([])
+  }
+}
+
+window.onload = function(){
+  var mentor = findMentor()
+  if(mentor){
+    showForm(mentor)
+  }
+}
+</script>
+
+</body>
+</html>

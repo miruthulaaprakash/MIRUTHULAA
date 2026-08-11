@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaboration Feed – Collab Nexus</title>
+<meta name="description" content="Browse student collaboration requests on Collab Nexus.">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>⚡ Collab Nexus</h1>
+      <p>Connect • Collaborate • Innovate</p>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="ideas.html">Idea Board</a>
+      <a href="mentors.html">Mentors</a>
+      <a href="find.html">Find Teammates</a>
+      <a href="profile.html">Student Profile</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header">
+  <div>
+    <h1>📢 Collaboration Requests</h1>
+    <p class="section-description">Browse open collaboration requests from fellow students and join a project.</p>
+  </div>
+</div>
+
+<div class="page-section">
+  <div id="feed" style="max-width:760px; margin:0 auto; padding:0 20px 40px; display:flex; flex-direction:column; gap:12px;"></div>
+</div>
+
+<script>
+// SAMPLE POSTS
+var posts = [
+  { msg:"Needed a 1st year student from CSE (C++, Java)", img:"https://i.pravatar.cc/100?img=11" },
+  { msg:"Needed a 3rd year student from EEE department", img:"https://i.pravatar.cc/100?img=22" },
+  { msg:"For science expo need 2nd year student who knows Python", img:"https://i.pravatar.cc/100?img=33" },
+  { msg:"Looking for UI/UX designer for mobile app", img:"https://i.pravatar.cc/100?img=44" },
+  { msg:"Need a 2nd year IT student for web development", img:"https://i.pravatar.cc/100?img=45" },
+  { msg:"Looking for team members for hackathon", img:"https://i.pravatar.cc/100?img=46" },
+  { msg:"Wanted a student who knows Python and AI basics", img:"https://i.pravatar.cc/100?img=47" },
+  { msg:"Need help in Java project development", img:"https://i.pravatar.cc/100?img=48" },
+  { msg:"Looking for content writer for technical blog", img:"https://i.pravatar.cc/100?img=49" },
+  { msg:"Need frontend developer (HTML, CSS, JS)", img:"https://i.pravatar.cc/100?img=50" },
+  { msg:"Looking for Android app developer", img:"https://i.pravatar.cc/100?img=51" },
+  { msg:"Wanted teammate for mini project (C++)", img:"https://i.pravatar.cc/100?img=52" },
+  { msg:"Need a student for data analysis project", img:"https://i.pravatar.cc/100?img=53" },
+  { msg:"Looking for graphic designer for poster", img:"https://i.pravatar.cc/100?img=54" },
+  { msg:"Need help in database management system", img:"https://i.pravatar.cc/100?img=55" },
+  { msg:"Looking for ML enthusiast for project", img:"https://i.pravatar.cc/100?img=56" },
+  { msg:"Wanted student for IoT based project", img:"https://i.pravatar.cc/100?img=57" },
+  { msg:"Need teammate for coding competition", img:"https://i.pravatar.cc/100?img=58" }
+]
+
+function loadFeed(){
+  var container = document.getElementById("feed")
+  container.innerHTML = ""
+
+  posts.forEach(function(p, i){
+    container.innerHTML +=
+      '<div class="post-card">' +
+        '<img class="post-avatar" src="' + p.img + '" alt="Student avatar">' +
+        '<div class="post-message">' + p.msg + '</div>' +
+        '<button onclick="collab(' + i + ')">🤝 Collaborate</button>' +
+      '</div>'
+  })
+}
+
+function collab(index){
+  alert("Collaboration request sent! 🤝")
+}
+
+loadFeed()
+</script>
+
+</body>
+</html>
